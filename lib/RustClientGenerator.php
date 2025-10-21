@@ -415,15 +415,6 @@ class RustClassInheritanceHierarchyNode
 		return $ret;
 	}
 
-	//// we are manually implementing `__debugInfo()` here so that it does not try to show the up pointer, which results in a cycle.
-	//function __debugInfo(): array
-	//{
-	//	return [
-	//		"value" => $this->value,
-	//		"descendants" => $this->descendants
-	//	];	
-	//}
-
 	protected function __construct(RustClass $value, ?array $descendants)
 	{
 		$this->value = $value;
