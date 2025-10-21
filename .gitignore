@@ -34,3 +34,12 @@ api_schema.php.xml
 
 **/target/classes/
 .gradle/
+
+# Rust build artifacts
+**/rust/target/
+
+
+
+
+
+
