@@ -401,16 +401,6 @@ class RustClassInheritanceHierarchyNode
 		return new self($value, null);
 	}
 
-	public function format(int $depth = 0): string
-	{
-		$indent = str_repeat("\t", $depth);
-		$s = "{$indent}{$this->value->raw_ident} ";
-		if ($this->descendants !== null)
-			foreach ($this->descendants as $descendant)
-				$s .= "\n" . $descendant->format($depth + 1);
-		return $s;
-	}
-
 	/**
 	 * Flattens the tree to a list
 	 * @return RustClassInheritanceHierarchyNode[]
