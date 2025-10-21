@@ -77,6 +77,7 @@ require_once(__DIR__ . "/lib/PhpZendClientGenerator.php");
 require_once(__DIR__ . "/lib/PojoClientGenerator.php");
 require_once(__DIR__ . "/lib/PythonClientGenerator.php");
 require_once(__DIR__ . "/lib/RubyClientGenerator.php");
+require_once(__DIR__ . "/lib/RustClientGenerator.php");
 require_once(__DIR__ . "/lib/TestmeDocGenerator.php");
 require_once(__DIR__ . "/lib/TestmeGenerator.php");
 require_once(__DIR__ . "/lib/Xml2As3ClientGenerator.php");
