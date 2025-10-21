@@ -366,6 +366,36 @@ class RustClassInheritanceHierarchyNode
 		return null;
 	}
 
+	/**
+	 * Creates a new leaf node. To add more nodes as descendants, append with the append method.
+	 *
+	 * ## Example
+	 *
+	 * Graph:
+	 *
+	 * ```txt
+	 *     A
+	 *    / \
+	 *   B   C
+	 *  / \
+	 * D   E
+	 * ```
+	 *
+	 * Code:
+	 *
+	 * ```php
+	 * $A = RustClassInheritanceHierarchyNode::newLeaf(...);
+	 * $B = RustClassInheritanceHierarchyNode::newLeaf(...);
+	 * $C = RustClassInheritanceHierarchyNode::newLeaf(...);
+	 * $D = RustClassInheritanceHierarchyNode::newLeaf(...);
+	 * $E = RustClassInheritanceHierarchyNode::newLeaf(...);
+	 *
+	 * $A->append($B);
+	 * $A->append($C);
+	 * $B->append($D);
+	 * $B->append($E);
+	 * ```
+	 */
 	public static function newLeaf(RustClass $value): self
 	{
 		return new self($value, null);
