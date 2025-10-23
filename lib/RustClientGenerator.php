@@ -66,8 +66,9 @@ class RustClientGenerator extends ClientGeneratorFromXml
 					var_dump($this->_classes);
 					exit;
 				}
+			} else {
+				$this->_classes->append(RustClassInheritanceHierarchyNode::newLeaf(RustClass::from($class)));
 			}
-			$this->_classes->append(RustClassInheritanceHierarchyNode::newLeaf(RustClass::from($class)));
 		}
 
 		foreach ($this->_classes->flatten() as $class) {
