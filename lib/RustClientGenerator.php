@@ -491,6 +491,9 @@ class RustClassMember
 	public string $ident;
 	public string $raw_ident;
 	public RustClassMemberType $type;
+	/**
+	 * The sanitized ident of the custom type this member is of
+	 */
 	public ?string $customType;
 	//TODO:change enumType and arrayType to references?
 	public ?string $arrayType;
