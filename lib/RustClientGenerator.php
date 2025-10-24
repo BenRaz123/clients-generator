@@ -95,8 +95,8 @@ class RustClientGenerator extends ClientGeneratorFromXml
 			}
 		} else {
 			$this->_classes_buff .= "\n";
-			if ($class->value->description !== null)
-				$this->_classes_buff .= "/// {$class->value->description}\n";
+			if ($class->value->description)
+				$this->_classes_buff .= descriptionToComment($class->value->description) . "\n";
 			$this->_classes_buff .= "pub struct {$class->value->raw_ident} {\n";
 			foreach ($class->value->members as $member)
 				$this->_classes_buff .= $member->toStructMember($this->_classes) . "\n";
@@ -543,27 +543,7 @@ class RustClassMember
 		if ($asInheritedFrom !== null)
 			$s .= "\t/// (inherited from [::kaltura_client::traits::{$asInheritedFrom->raw_ident}])\n";
 		if ($this->description)
-			$s .= "\t/// {$this->description}\n";
-		$s .= "\tpub(crate) {$this->ident}: ";
-		if ($this->enumType !== null)
-			$s .= "enums::{$this->enumType}";
-		elseif ($this->arrayType !== null){
-			$found = $tree->find(fn($x) => $x->ident==$this->arrayType);
-			if ($found->descendants)
-				$s .= "Vec<impl traits::{$this->arrayType}>";
-			else
-				$s .= "Vec<{$this->arrayType}>";
-		} else {
-			$s .= match ($this->type) {
-				RustClassMemberType::Integer => "i32",
-				RustClassMemberType::BigInt => "i64",
-				RustClassMemberType::String => "String",
-				RustClassMemberType::Bool => "bool",
-				default => null,
-			};
-		}
-
-		$s .= ",";
+			$s .= descriptionToComment($this->description) . "\n";
 		return $s;
 	}
 
@@ -753,8 +733,7 @@ class RustEnum
 		}
 
 		$s = "\n";
-		if ($this->description !== null)
-			$s .= "/// {$this->description}\n";
+		$s .= descriptionToComment($this->description) . "\n";
 		$s .= "pub enum {$this->ident} {\n";
 		foreach ($this->items as $variant) {
 			//TODO: remove
@@ -769,8 +748,7 @@ class RustEnum
 	protected function writeStringEnum(): string
 	{
 		$s = "";
-		if ($this->description !== null)
-			$s .= "/// {$this->description}\n";
+		$s .= descriptionToComment($this->description);
 		$s .= "pub enum {$this->ident} {\n";
 		foreach ($this->items as $variant) {
 			$s .= "\t/// `{$variant->value}`\n";
@@ -882,3 +860,14 @@ function camelToSnake($camelCase) {
 	$snakeCase = preg_replace($pattern, '_', $camelCase); 
 	return strtolower($snakeCase); 
 } 
+
+/**
+ * Converts a possibly multi-line description to a documentation comment
+ */
+function descriptionToComment(?string $description): string
+{
+	if (!$description)
+		return "";
+
+	return implode("\n", array_map(fn($line) => "/// {$line}", explode("\n", $description)));
+}
