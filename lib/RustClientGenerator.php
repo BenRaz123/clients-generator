@@ -506,42 +506,77 @@ class RustClassMember
 
 	/**
 	 * Converts to a trait getter/setter prototype (depending on the insertOnly/writeOnly permisions)
+	 *
+	 * Note: Not prefixed with a tab
 	 */
-	public function toPrototype(RustClassInheritanceHierarchy $tree): string {
-		$s =  "";	
-		if (!$this->readOnly) {
-			if ($this->description)
-				$s .= "/// {$this->description}\n";
-			$s .= "fn get_{$this->formatIdent($this->raw_ident)}(&self) -> {}";
+	public function toPrototype(RustClassInheritanceHierarchy $tree): string
+	{
+		$s =  "";
+		if ($this->description)
+			$comment = descriptionToComment($this->description) . "\n";
+		else
+			$comment = "";
+		$type = $this->formatType($tree, RustTypeScope::DynCompatibleTrait);
+		if (!$this->writeOnly) {
+			$s .= $comment;
+			$s .= "fn {$this->formatIdent('get_' .$this->raw_ident)}(&self) -> {$type};\n";
 		}
+		if (!$this->readOnly) {
+			$s .= $comment;
+			$s .= "fn {$this->formatIdent('set_' .$this->raw_ident)}(&mut self, x: {$type});\n";
+		}
+
+		return $s;
 	}
 
-	public function formatIdent(string $ident):string {
+	public function formatIdent(string $ident): string
+	{
 		//TODO: turn into snake case
 		return sanitizeIdent(camelToSnake($ident));
 	}
 
-	private function formatType(RustClassInheritanceHierarchy $tree): string {
+	private function formatType(RustClassInheritanceHierarchy $tree, RustTypeScope $s = RustTypeScope::Fn): string
+	{
 		switch ($this->type) {
-		case RustClassMemberType::BigInt:
-			return "i64";
-		case RustClassMemberType::Bool:
-			return "bool";
-		case RustClassMemberType::String:
-			if ($this->enumType)
-				return "enums::{$this->enumType}";
-			return "String";
-		case RustClassMemberType::Integer:
-			if ($this->enumType)
-				return "enums::{$this->enumType}";
-			return "i32";
-		case RustClassMemberType::Custom:
-			$customClassNode = $tree->find(fn($x) => $x->ident==$this->arrayType);
-			if ($found->descendants)
-				$s .= "Vec<impl traits::{$this->arrayType}>";
-			else
-				$s .= "Vec<{$this->arrayType}>";
-			return $this->customType;
+			case RustClassMemberType::File:
+				return "Vec<u8>";
+			case RustClassMemberType::Float:
+				return "f64";
+			case RustClassMemberType::BigInt:
+				return "i64";
+			case RustClassMemberType::Bool:
+				return "bool";
+			case RustClassMemberType::String:
+				if ($this->enumType)
+					return "enums::{$this->enumType}";
+				return "String";
+			case RustClassMemberType::Integer:
+				if ($this->enumType)
+					return "enums::{$this->enumType}";
+				return "i32";
+			case RustClassMemberType::Custom:
+				$customClassNode = $tree->find(fn($x) => $x->ident === $this->customType);
+				if ($customClassNode === null) {
+					if ($this->customType === "KalturaObjectBase")
+						//TODO: implement a proper type for KalturaObjectBase
+						return "() /*KalturaObjectBase*/";
+				}
+				if ($customClassNode->descendants || $customClassNode->value->abstract)
+					return match ($s) {
+						RustTypeScope::Fn => "impl I{$this->customType}",
+						RustTypeScope::Struct, RustTypeScope::DynCompatibleTrait => "Box<dyn I{$this->customType}>",
+					};
+				return $this->customType;
+			case RustClassMemberType::Array:
+				$arrayTypeNode = $tree->find(fn($x) => $x->ident === $this->arrayType);
+				if ($arrayTypeNode === null)
+					KalturaLog::err("{$this->customType} has null parent?");
+				if ($arrayTypeNode->descendants || $arrayTypeNode->value->abstract)
+					return match ($s) {
+						RustTypeScope::Fn => "Vec<impl I{$this->arrayType}>",
+						RustTypeScope::Struct, RustTypeScope::DynCompatibleTrait => "Vec<Box<dyn I{$this->arrayType}>>",
+					};
+				return $this->arrayType;
 		}
 	}
 
@@ -552,6 +587,7 @@ class RustClassMember
 			$s .= "/// (inherited from [I{$asInheritedFrom->ident}])\n";
 		if ($this->description)
 			$s .= descriptionToComment($this->description) . "\n";
+		$s .= "pub {$this->formatIdent($this->ident)}: {$this->formatType($tree, RustTypeScope::Struct)},";
 		return $s;
 	}
 
@@ -637,6 +673,15 @@ class RustClassMember
 enum RustClassMemberType
 {
 /**
+	 * Vec<u8>, for now, see TODOs
+	 */
+	case File;
+
+/**
+	 * f64
+	 */
+	case Float;
+/**
 	 * 32 bit integer (`i32` in Rust)
 	 */
 	case Integer;
@@ -664,10 +709,14 @@ enum RustClassMemberType
 	public static function from(string $x): self
 	{
 		return match ($x) {
+			"file" => self::File,
+			"float" => self::Float,
 			"int" => self::Integer,
 			"bigint" => self::BigInt,
 			"string" => self::String,
 			"bool" => self::Bool,
+
+			"map", //TODO: fix this
 			"array" => self::Array,
 			default => self::Custom,
 		};
