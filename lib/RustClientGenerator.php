@@ -936,11 +936,12 @@ function has_dupes(array $input_array): bool
 	return count($input_array) !== count(array_flip($input_array));
 }
 
-function camelToSnake($camelCase) { 
-	$pattern = '/(?<=\\w)(?=[A-Z])|(?<=[a-z])(?=[0-9])/'; 
-	$snakeCase = preg_replace($pattern, '_', $camelCase); 
-	return strtolower($snakeCase); 
-} 
+function camelToSnake($camelCase)
+{
+	$pattern = '/(?<=\\w)(?=[A-Z])|(?<=[a-z])(?=[0-9])/';
+	$snakeCase = preg_replace($pattern, '_', $camelCase);
+	return strtolower($snakeCase);
+}
 
 /**
  * Converts a possibly multi-line description to a documentation comment
