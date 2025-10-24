@@ -91,8 +91,7 @@ class RustClientGenerator extends ClientGeneratorFromXml
 		$bases = $class->getBaseClasses();
 		if ($class->value->abstract) {
 			if (!$class->descendants) {
-				KalturaLog::err("abstract class {$class->value->raw_ident} is abstract and has no derived classes. Skipping it.");
-				return;
+				KalturaLog::warning("abstract class {$class->value->raw_ident} is abstract and has no derived classes.");
 			}
 		} else {
 			$this->_classes_buff .= "\n";
