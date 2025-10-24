@@ -670,6 +670,29 @@ class RustClassMember
 	}
 }
 
+/**
+ * Whether a type is used as a function argument/return type or in a struct field
+ */
+enum RustTypeScope
+{
+/**
+	 * This type is used as a function argument/return type and thus can use `impl Trait` syntax
+	 */
+	case Fn;
+
+/**
+	 * This type is used as a struct field and thus cannot use `impl Trait` syntax
+	 */
+	case Struct;
+
+/**
+	 * This type is used in a dyn-compatible trait, which means that the `impl Trait` syntax cannot be used. Functionally the same as {@link RustTypeScope::Struct}.
+	 *
+	 * @see https://doc.rust-lang.org/reference/items/traits.html#r-items.traits.dyn-compatible
+	 */
+	case DynCompatibleTrait;
+}
+
 enum RustClassMemberType
 {
 /**
