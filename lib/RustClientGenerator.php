@@ -599,8 +599,9 @@ class RustClassMember
 		$customType = $xml->getAttribute("type");
 		$type = RustClassMemberType::from($customType);
 
-		if ($type !== RustClassMemberType::Custom) 
-			$customType = null;
+		if ($type === RustClassMemberType::Custom)
+			$customType = sanitizeIdent($customType);
+		else $customType = null;
 
 		if (($at = $xml->getAttribute("arrayType")) !== "")
 			$arrayType = sanitizeIdent($at);
