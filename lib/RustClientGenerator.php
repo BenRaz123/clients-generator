@@ -99,10 +99,10 @@ class RustClientGenerator extends ClientGeneratorFromXml
 				$this->_classes_buff .= descriptionToComment($class->value->description) . "\n";
 			$this->_classes_buff .= "pub struct {$class->value->raw_ident} {\n";
 			foreach ($class->value->members as $member)
-				$this->_classes_buff .= $member->toStructMember($this->_classes) . "\n";
+				$this->_classes_buff .= prefixWithTab($member->toStructMember($this->_classes)) . "\n";
 			foreach ($class->getBaseClasses() as $base)
 				foreach ($base->value->members as $member)
-					$this->_classes_buff .= $member->toStructMember($this->_classes, $base->value) . "\n";
+					$this->_classes_buff .= prefixWithTab($member->toStructMember($this->_classes, $base->value)) . "\n";
 			$this->_classes_buff .= "}\n";
 		}
 
@@ -541,7 +541,7 @@ class RustClassMember
 	{
 		$s = "";
 		if ($asInheritedFrom !== null)
-			$s .= "\t/// (inherited from [::kaltura_client::traits::{$asInheritedFrom->raw_ident}])\n";
+			$s .= "/// (inherited from [I{$asInheritedFrom->ident}])\n";
 		if ($this->description)
 			$s .= descriptionToComment($this->description) . "\n";
 		return $s;
@@ -870,4 +870,12 @@ function descriptionToComment(?string $description): string
 		return "";
 
 	return implode("\n", array_map(fn($line) => "/// {$line}", explode("\n", $description)));
+}
+
+/**
+ * Prefixes each line of a string with a tab ('\t') character.
+ */
+function prefixWithTab(string $s): string
+{
+	return preg_replace("/^/m", "\t", $s);
 }
