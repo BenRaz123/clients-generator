@@ -72,6 +72,7 @@ class RustClientGenerator extends ClientGeneratorFromXml
 		}
 
 		foreach ($this->_classes->flatten() as $class) {
+			if (!$this->shouldIncludeType($class->value->raw_ident)) continue;
 			$this->writeClass($class);
 		}
 		$this->addFile("src/kaltura_client/classes.rs", $this->_classes_buff);
