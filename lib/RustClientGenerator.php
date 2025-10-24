@@ -19,7 +19,6 @@
 class RustClientGenerator extends ClientGeneratorFromXml
 {
 	private array $_enums = [];
-	private string $_trait_buff = "";
 	private string $_classes_buff = "";
 	private RustClassInheritanceHierarchy $_classes;
 
@@ -107,14 +106,17 @@ class RustClientGenerator extends ClientGeneratorFromXml
 		}
 
 		// this class has derived classes
-		if ($class->descendants) {
-			$this->_trait_buff .= "\n";
+		if ($class->descendants || $class->value->abstract) {
+			$this->_classes_buff .= "\n";
 			if ($class->value->description)
-				$this->_trait_buff .= "/// {$class->value->description}\n";
-			$this->_trait_buff .= "pub trait {$class->value->ident}";
+				$this->_classes_buff .= descriptionToComment($class->value->description) . "\n";
+			$this->_classes_buff .= "pub trait I{$class->value->ident}";
 			if ($class->up instanceof RustClassInheritanceHierarchyNode)
-				$this->_trait_buff .= ": {$class->up->value->ident}";
-			$this->_trait_buff .= " {\n";
+				$this->_classes_buff .= ": I{$class->up->value->ident}";
+			$this->_classes_buff .= " {\n";
+			foreach ($class->value->members as $member)
+				$this->_classes_buff .= prefixWithTab($member->toPrototype($this->_classes));
+			$this->_classes_buff .= "}\n";
 		}
 	}
 
