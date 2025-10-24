@@ -53,6 +53,8 @@ class RustClientGenerator extends ClientGeneratorFromXml
 		$this->_classes = RustClassInheritanceHierarchy::new();
 		$classes = $xpath->query("/xml/classes/class");
 
+		$this->_classes_buff .= "use crate::kaltura_client::enums;\n";
+
 		foreach ($classes as $class) {
 			/** @var DOMElement $class */
 			$base = $class->getAttribute("base");
