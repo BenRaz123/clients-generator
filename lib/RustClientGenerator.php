@@ -15,6 +15,11 @@
  *	* [X] Both
  * TODO: How should abstract classes with no derived classes be treated?
  * TODO: What does insert only mean?
+ * TODO: How to represent "type='file'"?
+ * TODO: How to do Kaltura object base?
+ * TODO: Dynamic or static dispatch?
+ * TODO: What is the `map` type?
+ *	- Seems to be an array
  */
 class RustClientGenerator extends ClientGeneratorFromXml
 {
