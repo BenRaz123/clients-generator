@@ -49,7 +49,9 @@ class RustClientGenerator extends ClientGeneratorFromXml
 
 		foreach ($xpath->query("/xml/enums/enum") as $node) {
 			$enum = RustEnum::from($node);
-			if (!$this->shouldIncludeType($enum->raw_ident)) continue;
+			if (!$this->shouldIncludeType($enum->raw_ident)) {
+				continue;
+			}
 			$enums .= $enum->toRust();
 		}
 
@@ -65,9 +67,9 @@ class RustClientGenerator extends ClientGeneratorFromXml
 			$base = $class->getAttribute("base");
 			if ($base !== "") {
 				$found_base = $this->_classes->findFromRawIdent($base);
-				if ($found_base !== null)
+				if ($found_base !== null) {
 					$found_base->append(RustClassInheritanceHierarchyNode::newLeaf(RustClass::from($class)));
-				else {
+				} else {
 					KalturaLog::err("class {$class->getAttribute('name')} inherits from {$base} but it is not loaded yet");
 					var_dump($this->_classes);
 					exit;
@@ -100,28 +102,35 @@ class RustClientGenerator extends ClientGeneratorFromXml
 			}
 		} else {
 			$this->_classes_buff .= "\n";
-			if ($class->value->description)
+			if ($class->value->description) {
 				$this->_classes_buff .= descriptionToComment($class->value->description) . "\n";
+			}
 			$this->_classes_buff .= "pub struct {$class->value->raw_ident} {\n";
-			foreach ($class->value->members as $member)
+			foreach ($class->value->members as $member) {
 				$this->_classes_buff .= prefixWithTab($member->toStructMember($this->_classes)) . "\n";
-			foreach ($class->getBaseClasses() as $base)
-				foreach ($base->value->members as $member)
+			}
+			foreach ($class->getBaseClasses() as $base) {
+				foreach ($base->value->members as $member) {
 					$this->_classes_buff .= prefixWithTab($member->toStructMember($this->_classes, $base->value)) . "\n";
+				}
+			}
 			$this->_classes_buff .= "}\n";
 		}
 
 		// this class has derived classes
 		if ($class->descendants || $class->value->abstract) {
 			$this->_classes_buff .= "\n";
-			if ($class->value->description)
+			if ($class->value->description) {
 				$this->_classes_buff .= descriptionToComment($class->value->description) . "\n";
+			}
 			$this->_classes_buff .= "pub trait I{$class->value->ident}";
-			if ($class->up instanceof RustClassInheritanceHierarchyNode)
+			if ($class->up instanceof RustClassInheritanceHierarchyNode) {
 				$this->_classes_buff .= ": I{$class->up->value->ident}";
+			}
 			$this->_classes_buff .= " {\n";
-			foreach ($class->value->members as $member)
+			foreach ($class->value->members as $member) {
 				$this->_classes_buff .= prefixWithTab($member->toPrototype($this->_classes));
+			}
 			$this->_classes_buff .= "}\n";
 		}
 	}
@@ -206,9 +215,11 @@ class RustClientGenerator extends ClientGeneratorFromXml
  */
 function sanitizeIdent(string $ident): string
 {
-	foreach (RustClientGenerator::RUST_KEYWORDS as $keyword)
-		if ($ident == $keyword)
+	foreach (RustClientGenerator::RUST_KEYWORDS as $keyword) {
+		if ($ident == $keyword) {
 			return "r#$ident";
+		}
+	}
 	return $ident;
 }
 
@@ -238,13 +249,15 @@ class RustClassInheritanceHierarchy
 	 */
 	public function isBase(string $raw_ident): ?bool
 	{
-		if (($found = $this->findFromRawIdent($raw_ident)) !== null)
-			if ($found->descendants !== null)
+		if (($found = $this->findFromRawIdent($raw_ident)) !== null) {
+			if ($found->descendants !== null) {
 				return true;
-			else
+			} else {
 				return false;
-		else
+			}
+		} else {
 			return null;
+		}
 	}
 
 	/**
@@ -254,11 +267,15 @@ class RustClassInheritanceHierarchy
 	public function isDescendant(string $raw_ident): ?bool
 	{
 		$found = $this->findFromRawIdent($raw_ident);
-		if ($found === null) return null;
+		if ($found === null) {
+			return null;
+		}
 		// roots are the only classes not descendants of other classes
-		foreach ($this->roots as $root)
-			if ($root->value->raw_ident == $raw_ident)
+		foreach ($this->roots as $root) {
+			if ($root->value->raw_ident == $raw_ident) {
 				return false;
+			}
+		}
 		return true;
 	}
 
@@ -276,9 +293,11 @@ class RustClassInheritanceHierarchy
 	 */
 	public function find(callable $f): ?RustClassInheritanceHierarchyNode
 	{
-		foreach ($this->roots as $root)
-			if (($found = $root->find($f)) !== null)
+		foreach ($this->roots as $root) {
+			if (($found = $root->find($f)) !== null) {
 				return $found;
+			}
+		}
 		return null;
 	}
 
@@ -289,9 +308,11 @@ class RustClassInheritanceHierarchy
 	public function flatten(): array
 	{
 		$ret = [];
-		foreach ($this->roots as $root)
-			foreach ($root->flatten() as $it)
+		foreach ($this->roots as $root) {
+			foreach ($root->flatten() as $it) {
 				$ret[] = $it;
+			}
+		}
 		return $ret;
 	}
 
@@ -350,11 +371,13 @@ class RustClassInheritanceHierarchyNode
 			return [];
 		}
 
-		if ($up instanceof RustClassInheritanceHierarchy)
+		if ($up instanceof RustClassInheritanceHierarchy) {
 			return [];
+		}
 
-		if ($up instanceof RustClassInheritanceHierarchyNode)
+		if ($up instanceof RustClassInheritanceHierarchyNode) {
 			return array_merge([$up], $up->getBaseClasses());
+		}
 
 		throw new Exception("unreachable area reached");
 	}
@@ -365,13 +388,17 @@ class RustClassInheritanceHierarchyNode
 	 */
 	public function find(callable $f): ?self
 	{
-		if ($f($this->value))
+		if ($f($this->value)) {
 			return $this;
+		}
 
-		if ($this->descendants !== null)
-			foreach ($this->descendants as $node)
-				if (($found = $node->find($f)) !== null)
+		if ($this->descendants !== null) {
+			foreach ($this->descendants as $node) {
+				if (($found = $node->find($f)) !== null) {
 					return $found;
+				}
+			}
+		}
 
 		return null;
 	}
@@ -418,10 +445,13 @@ class RustClassInheritanceHierarchyNode
 	public function flatten(): array
 	{
 		$ret = [$this];
-		if ($this->descendants)
-			foreach ($this->descendants as $descendant)
-				foreach ($descendant->flatten() as $flattened)
+		if ($this->descendants) {
+			foreach ($this->descendants as $descendant) {
+				foreach ($descendant->flatten() as $flattened) {
 					$ret[] = $flattened;
+				}
+			}
+		}
 		return $ret;
 	}
 
@@ -456,20 +486,30 @@ class RustClass
 	{
 		$raw_ident = $xml->getAttribute("name");
 		$ident = sanitizeIdent($raw_ident);
-		if (($desc = $xml->getAttribute("description")) !== "")
+		if (($desc = $xml->getAttribute("description")) !== "") {
 			$description = $desc;
-		else $description = null;
+		} else {
+			$description = null;
+		}
 
-		if ($xml->getAttribute("abstract") !== "")
+		if ($xml->getAttribute("abstract") !== "") {
 			$abstract = true;
-		else $abstract = false;
-		if ($xml->getAttribute("deprecated") !== "")
+		} else {
+			$abstract = false;
+		}
+
+		if ($xml->getAttribute("deprecated") !== "") {
 			$deprecated = true;
-		else $deprecated = false;
+		} else {
+			$deprecated = false;
+		}
+
 		$members = [];
-		foreach ($xml->childNodes as $member)
-			if ($member instanceof \DOMElement)
+		foreach ($xml->childNodes as $member) {
+			if ($member instanceof \DOMElement) {
 				$members[] = RustClassMember::from($member);
+			}
+		}
 
 		return new self($abstract, $deprecated, $description, $raw_ident, $ident, $members);
 	}
@@ -512,10 +552,11 @@ class RustClassMember
 	public function toPrototype(RustClassInheritanceHierarchy $tree): string
 	{
 		$s =  "";
-		if ($this->description)
+		if ($this->description) {
 			$comment = descriptionToComment($this->description) . "\n";
-		else
+		} else {
 			$comment = "";
+		}
 		$type = $this->formatType($tree, RustTypeScope::DynCompatibleTrait);
 		if (!$this->writeOnly) {
 			$s .= $comment;
@@ -557,25 +598,29 @@ class RustClassMember
 			case RustClassMemberType::Custom:
 				$customClassNode = $tree->find(fn($x) => $x->ident === $this->customType);
 				if ($customClassNode === null) {
-					if ($this->customType === "KalturaObjectBase")
+					if ($this->customType === "KalturaObjectBase") {
 						//TODO: implement a proper type for KalturaObjectBase
 						return "() /*KalturaObjectBase*/";
+					}
 				}
-				if ($customClassNode->descendants || $customClassNode->value->abstract)
+				if ($customClassNode->descendants || $customClassNode->value->abstract) {
 					return match ($s) {
 						RustTypeScope::Fn => "impl I{$this->customType}",
 						RustTypeScope::Struct, RustTypeScope::DynCompatibleTrait => "Box<dyn I{$this->customType}>",
 					};
+				}
 				return $this->customType;
 			case RustClassMemberType::Array:
 				$arrayTypeNode = $tree->find(fn($x) => $x->ident === $this->arrayType);
-				if ($arrayTypeNode === null)
+				if ($arrayTypeNode === null) {
 					KalturaLog::err("{$this->customType} has null parent?");
-				if ($arrayTypeNode->descendants || $arrayTypeNode->value->abstract)
+				}
+				if ($arrayTypeNode->descendants || $arrayTypeNode->value->abstract) {
 					return match ($s) {
 						RustTypeScope::Fn => "Vec<impl I{$this->arrayType}>",
 						RustTypeScope::Struct, RustTypeScope::DynCompatibleTrait => "Vec<Box<dyn I{$this->arrayType}>>",
 					};
+				}
 				return $this->arrayType;
 		}
 	}
@@ -583,10 +628,12 @@ class RustClassMember
 	public function toStructMember(RustClassInheritanceHierarchy $tree, ?RustClass $asInheritedFrom = null): string
 	{
 		$s = "";
-		if ($asInheritedFrom !== null)
+		if ($asInheritedFrom !== null) {
 			$s .= "/// (inherited from [I{$asInheritedFrom->ident}])\n";
-		if ($this->description)
+		}
+		if ($this->description) {
 			$s .= descriptionToComment($this->description) . "\n";
+		}
 		$s .= "pub {$this->formatIdent($this->ident)}: {$this->formatType($tree, RustTypeScope::Struct)},";
 		return $s;
 	}
@@ -599,17 +646,23 @@ class RustClassMember
 		$customType = $xml->getAttribute("type");
 		$type = RustClassMemberType::from($customType);
 
-		if ($type === RustClassMemberType::Custom)
+		if ($type === RustClassMemberType::Custom) {
 			$customType = sanitizeIdent($customType);
-		else $customType = null;
+		} else {
+			$customType = null;
+		}
 
-		if (($at = $xml->getAttribute("arrayType")) !== "")
+		if (($at = $xml->getAttribute("arrayType")) !== "") {
 			$arrayType = sanitizeIdent($at);
-		else $arrayType = null;
+		} else {
+			$arrayType = null;
+		}
 
-		if (($et = $xml->getAttribute("enumType")) !== "")
+		if (($et = $xml->getAttribute("enumType")) !== "") {
 			$enumType = sanitizeIdent($et);
-		else $enumType = null;
+		} else {
+			$enumType = null;
+		}
 
 		if (($enumType !== null) && (($type !== RustClassMemberType::Integer) && ($type !== RustClassMemberType::String))) {
 			KalturaLog::warning("\tclass member {$raw_ident} encountered which is based off of a non-string or int discriminated enum");
@@ -621,13 +674,20 @@ class RustClassMember
 		$writeOnly = $xml->getAttribute("writeOnly") === 1;
 		$insertOnly = $xml->getAttribute("insertOnly") === 1;
 
-		if (($writeOnly || $insertOnly) && $readOnly) KalturaLog::warning("class member {$raw_ident} has both (writeOnly/insertOnly) and readOnly set");
-		if ($writeOnly && $insertOnly) KalturaLog::warning("class member {$raw_ident} has both writeOnly and readOnly set");
+		if (($writeOnly || $insertOnly) && $readOnly) {
+			KalturaLog::warning("class member {$raw_ident} has both (writeOnly/insertOnly) and readOnly set");
+		}
+
+		if ($writeOnly && $insertOnly) {
+			KalturaLog::warning("class member {$raw_ident} has both writeOnly and readOnly set");
+		}
 
 		$isTime = $xml->getAttribute("isTime") === 1;
-		if (($desc = $xml->getAttribute("description")) !== "")
+		if (($desc = $xml->getAttribute("description")) !== "") {
 			$description = $desc;
-		else $description = null;
+		} else {
+			$description = null;
+		}
 
 		return new self(
 			$ident,
@@ -777,8 +837,9 @@ class RustEnum
 		}
 
 		$description = null;
-		if (($desc = $node->getAttribute("description")) !== "")
+		if (($desc = $node->getAttribute("description")) !== "") {
 			$description = $desc;
+		}
 
 		$items = [];
 		foreach ($node->childNodes as $variant) {
@@ -807,7 +868,9 @@ class RustEnum
 	protected function writeIntEnum(): string
 	{
 		$variant_values = [];
-		foreach ($this->items as $item) $variant_values[] = $item->value;
+		foreach ($this->items as $item) {
+			$variant_values[] = $item->value;
+		}
 		if (has_dupes($variant_values)) {
 			KalturaLog::warning("int enum \"{$this->raw_ident}\" has duplicate values (values: [" . implode(',', $variant_values) . "]), treating it as a string enum instead.");
 			return $this->writeStringEnum();
@@ -840,8 +903,9 @@ class RustEnum
 		$s .= "impl ::core::convert::AsRef<str> for {$this->ident} {\n";
 		$s .= "\tfn as_ref(&self) -> &str {\n";
 		$s .= "\t\tmatch *self {\n";
-		foreach ($this->items as $variant)
+		foreach ($this->items as $variant) {
 			$s .= "\t\t\tSelf::{$variant->ident} => \"{$variant->value}\",\n";
+		}
 		$s .= "\t\t}\n";
 		$s .= "\t}\n";
 		$s .= "}\n";
@@ -948,8 +1012,9 @@ function camelToSnake($camelCase)
  */
 function descriptionToComment(?string $description): string
 {
-	if (!$description)
+	if (!$description) {
 		return "";
+	}
 
 	return implode("\n", array_map(fn($line) => "/// {$line}", explode("\n", $description)));
 }
