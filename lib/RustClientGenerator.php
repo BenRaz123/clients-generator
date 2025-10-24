@@ -281,9 +281,7 @@ class RustClassInheritanceHierarchy
 
 	public function findFromRawIdent(string $raw_ident): ?RustClassInheritanceHierarchyNode
 	{
-		return $this->find(function (RustClass $class) use ($raw_ident) {
-			return $class->raw_ident === $raw_ident;
-		});
+		return $this->find(fn($class) => $class->raw_ident === $raw_ident);
 	}
 
 	/**
